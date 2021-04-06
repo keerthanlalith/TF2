@@ -19,9 +19,9 @@ import copy
 curr_state = keras.Input(shape=(4,))
 
 # "encoded" is the encoded representation of the input
-encoded = Dense(16)(curr_state)
+encoded = Dense(256)(curr_state)
 encoded = LeakyReLU(alpha=0.2)(encoded)
-encoded = Dense(16)(encoded)
+encoded = Dense(256)(encoded)
 encoded = LeakyReLU(alpha=0.2)(encoded)
 n_state = layers.Dense(4)(encoded)
 
@@ -36,11 +36,11 @@ lr_schedule = keras.optimizers.schedules.ExponentialDecay(
     initial_learning_rate=5e-4,
     decay_steps=1000,
     decay_rate=0.9)
-opt = keras.optimizers.Adam(learning_rate=lr_schedule)
+#opt = keras.optimizers.Adam(learning_rate=lr_schedule)
 
 #opt = SGD(lr=0.005, momentum=0.9)
 #opt = Adam(lr=0.0005)
-#opt = tf.keras.optimizers.RMSprop(learning_rate=0.0005)
+opt = tf.keras.optimizers.RMSprop(learning_rate=0.00015)
 AE.compile(loss='mean_squared_error', optimizer=opt, metrics=['mse'])
 #AE.compile(loss='mean_squared_logarithmic_error', optimizer=opt, metrics=['mse'])
 
@@ -138,16 +138,16 @@ print("------")
     
 # Denormalise the data
 #pred_ns = denormalise (pred_ns)
-d_err_1 = np.abs(test_d - pred_ns)
+d_err_1 = np.abs(test_ns - pred_ns)
 
 for i in range(n):
     for j in range(4):
         pred_ns[i][j]=float("{:5.6f}".format(pred_ns[i][j]))
-        test_d[i][j]=float("{:5.6f}".format(test_d[i][j]))
+        test_ns[i][j]=float("{:5.6f}".format(test_ns[i][j]))
         d_err_1[i][j]=float("{:5.6f}".format(d_err_1[i][j]))
 
 for i in range(n):
-    print(pred_ns[i],test_d[i],d_err_1[i])
+    print(pred_ns[i],test_ns[i],d_err_1[i])
 print("------")
 
 p_err =np.mean(d_err*d_err,axis=0)
