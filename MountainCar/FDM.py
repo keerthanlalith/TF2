@@ -16,15 +16,15 @@ import copy
 
 
 # This is our input image
-curr_state = keras.Input(shape=(4,))
-curr_action = keras.Input(shape=(2,))
+curr_state = keras.Input(shape=(2,))
+curr_action = keras.Input(shape=(3,))
 # "encoded" is the encoded representation of the input
 curr_state_action = concatenate([curr_state, curr_action])
 encoded = Dense(16)(curr_state_action)
 encoded = LeakyReLU(alpha=0.2)(encoded)
 encoded = Dense(16)(encoded)
 encoded = LeakyReLU(alpha=0.2)(encoded)
-n_state = layers.Dense(4)(encoded)
+n_state = layers.Dense(2)(encoded)
 
 # This model maps an input to its encoded representation
 FDM = keras.Model(inputs=[curr_state,curr_action], outputs=n_state)
@@ -49,7 +49,7 @@ s = pickle.load(open(filename, 'rb'))
 filename = 'Data/Diff.npy'
 d = pickle.load(open(filename, 'rb'))
 
-temp = np.zeros((a.size,2))
+temp = np.zeros((a.size,3))
 for i in range(len(a)):
     temp[i][a[i]] = 1
 a = temp
@@ -63,7 +63,7 @@ test_s = pickle.load(open(filename, 'rb'))
 filename = 'Data/TDiff.npy'
 test_d = pickle.load(open(filename, 'rb'))
 
-temp = np.zeros((test_a.size,2))
+temp = np.zeros((test_a.size,3))
 for i in range(len(test_a)):
     temp[i][test_a[i]] = 1
 test_a = temp
@@ -78,7 +78,7 @@ while pause == 1:
 #FDM = keras.models.load_model('saved_model/FDM')
 
 history = FDM.fit(x=[s,a], y=ns,
-                epochs=100,
+                epochs=10,
                 batch_size=32,
                 shuffle=True,
                 validation_data=([test_s,test_a], test_ns))
@@ -128,16 +128,6 @@ while pause == 1:
 #decoded_imgs = decoder.predict(encoded_imgs)
 
 pred_ns = FDM.predict([test_s,test_a])
-dummystate = np.zeros((1,4))
-dummyaction = np.zeros((1,2))
-
-for i in range(4):
-    dummystate[0][i] = test_s[0][i]
-for i in range(2):
-    dummyaction[0][i] = test_a[0][i]
-
-pred_ns_1 = FDM.predict([dummystate,dummyaction])
-print(pred_ns_1)
 
 print("prediction ")
 for i in range(100):
