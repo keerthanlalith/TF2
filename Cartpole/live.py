@@ -13,30 +13,30 @@ import gym
 ENV = "CartPole-v1"
 num_steps = 1000
 
-
-
+state_dim = 4
+action_dim = 2
 
 # Input state
-AE_state = keras.Input(shape=(4,),name="AE_state")
+AE_state = keras.Input(shape=(state_dim,),name="AE_state")
 
 # 2layer neural network to predict the next state
 encoded = Dense(32,name="dense1_NS")(AE_state)
 encoded = LeakyReLU(alpha=0.2,name="LeakyRelu1_NS")(encoded)
 encoded = Dense(32,name="dense2_NS")(encoded)
 encoded = LeakyReLU(alpha=0.2,name="LeakyRelu2_NS")(encoded)
-n_state = layers.Dense(4,name="dense3_NS")(encoded)
+n_state = layers.Dense(state_dim,name="dense3_NS")(encoded)
 
 
 # Input state
-curr_state = keras.Input(shape=(4,),name="curr_state")
-curr_action = keras.Input(shape=(2,),name="curr_action")
+curr_state = keras.Input(shape=(state_dim,),name="curr_state")
+curr_action = keras.Input(shape=(action_dim,),name="curr_action")
 # FDM model
 curr_state_action = concatenate([curr_state, curr_action])
 fdm_h1 = Dense(16,name="dense1_FDM")(curr_state_action)
 fdm_h1 = LeakyReLU(alpha=0.2,name="LeakyRelu1_FDM")(fdm_h1)
 fdm_h2 = Dense(16,name="dense2_FDM")(fdm_h1)
 fdm_h2 = LeakyReLU(alpha=0.2,name="LeakyRelu2_FDM")(fdm_h2)
-fdm_pred_state = layers.Dense(4,name="dense3_FDM")(fdm_h2)
+fdm_pred_state = layers.Dense(state_dim,name="dense3_FDM")(fdm_h2)
 
 
 # This model maps an input to its next state
@@ -142,10 +142,10 @@ pause = 0
 while pause == 1:
     pause = 1
 
-p_state = np.zeros((1,4))
-left = np.zeros((1,2))
+p_state = np.zeros((1,state_dim))
+left = np.zeros((1,action_dim))
 left[0][0] = 1
-right = np.zeros((1,2))
+right = np.zeros((1,action_dim))
 right[0][1] = 1
 
 verbose =False
@@ -195,36 +195,3 @@ while steps < num_steps:
     total_reward += episode_rew
     episodes += 1.
 print("Average reward", total_reward / episodes)
-'''
-# Predict next state 
-# Note that we take them from the *test* set
-pred_ns = AE.predict(test_s)
-
-repeat = True
-for m in range(len(test_s)):
-    print("---------------------",m,"---------------------")
-    for i in range(4):
-        p_state[0][i] = test_s[m][i]
-
-    FDM_ns_l = np.squeeze(FDM.predict([p_state,left]))
-    FDM_ns_r = np.squeeze(FDM.predict([p_state,right]))
-
-    FDM_ns_both = np.array([FDM_ns_l,FDM_ns_r])
-
-    print("True Next state      ",test_ns[m])
-    print("AE pred Nstate       ",pred_ns[m])
-    print("FDM both next state  ",FDM_ns_both)
-    cost = np.abs(FDM_ns_both-pred_ns[m])
-    print("state diff           ",cost)
-    par_cost =np.array([cost[0][0]+cost[0][2],cost[1][0]+cost[1][2]])
-    cost = np.sum(cost,axis=1)
-    print("cost                 ",cost)
-    print("par_cost               ",par_cost)
-    
-    action_from_IDM = np.argmin(cost, axis=0)
-    print("True action          ",test_a[m])
-    print("action from IDM  full cost    ",action_from_IDM)
-    action_from_IDM = np.argmin(par_cost, axis=0)
-    print("action from IDM  partial cost    ",action_from_IDM)
-
-'''

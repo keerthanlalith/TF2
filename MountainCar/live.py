@@ -10,33 +10,33 @@ import pickle
 import copy
 import os
 import gym
-ENV = "CartPole-v1"
+ENV = "MountainCar-v0"
 num_steps = 1000
 
-
-
+state_dim=2
+action_dim =3
 
 # Input state
-AE_state = keras.Input(shape=(4,),name="AE_state")
+AE_state = keras.Input(shape=(state_dim,),name="AE_state")
 
 # 2layer neural network to predict the next state
 encoded = Dense(32,name="dense1_NS")(AE_state)
 encoded = LeakyReLU(alpha=0.2,name="LeakyRelu1_NS")(encoded)
 encoded = Dense(32,name="dense2_NS")(encoded)
 encoded = LeakyReLU(alpha=0.2,name="LeakyRelu2_NS")(encoded)
-n_state = layers.Dense(4,name="dense3_NS")(encoded)
+n_state = layers.Dense(state_dim,name="dense3_NS")(encoded)
 
 
 # Input state
-curr_state = keras.Input(shape=(4,),name="curr_state")
-curr_action = keras.Input(shape=(2,),name="curr_action")
+curr_state = keras.Input(shape=(state_dim,),name="curr_state")
+curr_action = keras.Input(shape=(action_dim,),name="curr_action")
 # FDM model
 curr_state_action = concatenate([curr_state, curr_action])
 fdm_h1 = Dense(16,name="dense1_FDM")(curr_state_action)
 fdm_h1 = LeakyReLU(alpha=0.2,name="LeakyRelu1_FDM")(fdm_h1)
 fdm_h2 = Dense(16,name="dense2_FDM")(fdm_h1)
 fdm_h2 = LeakyReLU(alpha=0.2,name="LeakyRelu2_FDM")(fdm_h2)
-fdm_pred_state = layers.Dense(4,name="dense3_FDM")(fdm_h2)
+fdm_pred_state = layers.Dense(state_dim,name="dense3_FDM")(fdm_h2)
 
 
 # This model maps an input to its next state
@@ -74,7 +74,7 @@ s = pickle.load(open(filename, 'rb'))
 filename = 'Data/Diff.npy'
 d = pickle.load(open(filename, 'rb'))
 
-temp = np.zeros((a.size,2))
+temp = np.zeros((a.size,action_dim))
 for i in range(len(a)):
     temp[i][a[i]] = 1
 a = temp
@@ -89,7 +89,7 @@ test_s = pickle.load(open(filename, 'rb'))
 filename = 'Data/TDiff.npy'
 test_d = pickle.load(open(filename, 'rb'))
 
-temp = np.zeros((test_a.size,2))
+temp = np.zeros((test_a.size,action_dim))
 for i in range(len(test_a)):
     temp[i][test_a[i]] = 1
 test_a = temp
@@ -131,22 +131,25 @@ print("Eval")
 # evaluate the model
 _, train_mse = AE.evaluate(s, ns, verbose=0)
 _, test_mse = AE.evaluate(test_s, test_ns, verbose=0)
-print('Train: %.6f, Test: %.6f' % (train_mse, test_mse))
+print('Train: %.8f, Test: %.8f' % (train_mse, test_mse))
 
 
 _, train_mse = FDM.evaluate([s,a], ns, verbose=0)
 _, test_mse = FDM.evaluate([test_s,test_a], test_ns, verbose=0)
-print('Train: %.6f, Test: %.6f' % (train_mse, test_mse))
+print('Train: %.8f, Test: %.8f' % (train_mse, test_mse))
 
 pause = 0 
 while pause == 1:
     pause = 1
 
-p_state = np.zeros((1,4))
-left = np.zeros((1,2))
+p_state = np.zeros((1,state_dim))
+# Action for FDM to sample from
+left = np.zeros((1,action_dim))
 left[0][0] = 1
-right = np.zeros((1,2))
-right[0][1] = 1
+stop = np.zeros((1,action_dim))
+stop[0][1] = 1
+right = np.zeros((1,action_dim))
+right[0][2] = 1
 
 verbose =False
 
@@ -159,32 +162,34 @@ while steps < num_steps:
     episode_rew = 0
     while not done:
         env.render()
-        for i in range(4):
+        for i in range(state_dim):
             p_state[0][i] = obs[i]
-        pred_ns = AE.predict(p_state)    
+        pred_ns = AE.predict(p_state)
         FDM_ns_l = np.squeeze(FDM.predict([p_state,left]))
+        FDM_ns_s = np.squeeze(FDM.predict([p_state,stop]))
         FDM_ns_r = np.squeeze(FDM.predict([p_state,right]))
-        FDM_ns_both = np.array([FDM_ns_l,FDM_ns_r])
-        state_diff  = np.abs(FDM_ns_both-pred_ns)
-        par_cost =np.array([state_diff[0][0]+state_diff[0][2],state_diff[1][0]+state_diff[1][2]])
+        FDM_ns_both = np.array([FDM_ns_l,FDM_ns_s,FDM_ns_r])
+        state_diff = np.abs(FDM_ns_both-pred_ns)
         cost = np.sum(state_diff,axis=1)
         action_from_IDM = np.argmin(cost, axis=0)
-        action_from_pIDM = np.argmin(par_cost, axis=0)
 
         if verbose ==True:
-            print("AE pred Nstate                   ",pred_ns)
-            print("FDM both next state              ",FDM_ns_both)
-            print("cost                             ",cost)
-            print("partial cost                     ",par_cost)
-            print("action from IDM  full cost       ",action_from_IDM)
-            print("action from IDM  partial cost    ",action_from_pIDM)
+            print("AE pred Nstate       ",pred_ns)
+            print("FDM next states      ",FDM_ns_both)
+            print("state diff           ",cost)
+            print("cost                 ",cost)    
+            print("True action          ",test_a[m])
+            print("action from IDM      ",action_from_IDM)
 
-        action = action_from_pIDM
-        #0 Push cart to the left
-        #1 Push cart to the right
-        #print(action)
+        action = action_from_IDM
+        #Num    Action
+        #0      Accelerate to the Left
+        #1      Don't accelerate
+        #2      Accelerate to the Right
         if action == 0:
             print("left")
+        elif action== 1:
+            print("stop")
         else:
             print("right")
         obs, rew, done, _ = env.step(action)
@@ -195,36 +200,3 @@ while steps < num_steps:
     total_reward += episode_rew
     episodes += 1.
 print("Average reward", total_reward / episodes)
-'''
-# Predict next state 
-# Note that we take them from the *test* set
-pred_ns = AE.predict(test_s)
-
-repeat = True
-for m in range(len(test_s)):
-    print("---------------------",m,"---------------------")
-    for i in range(4):
-        p_state[0][i] = test_s[m][i]
-
-    FDM_ns_l = np.squeeze(FDM.predict([p_state,left]))
-    FDM_ns_r = np.squeeze(FDM.predict([p_state,right]))
-
-    FDM_ns_both = np.array([FDM_ns_l,FDM_ns_r])
-
-    print("True Next state      ",test_ns[m])
-    print("AE pred Nstate       ",pred_ns[m])
-    print("FDM both next state  ",FDM_ns_both)
-    cost = np.abs(FDM_ns_both-pred_ns[m])
-    print("state diff           ",cost)
-    par_cost =np.array([cost[0][0]+cost[0][2],cost[1][0]+cost[1][2]])
-    cost = np.sum(cost,axis=1)
-    print("cost                 ",cost)
-    print("par_cost               ",par_cost)
-    
-    action_from_IDM = np.argmin(cost, axis=0)
-    print("True action          ",test_a[m])
-    print("action from IDM  full cost    ",action_from_IDM)
-    action_from_IDM = np.argmin(par_cost, axis=0)
-    print("action from IDM  partial cost    ",action_from_IDM)
-
-'''

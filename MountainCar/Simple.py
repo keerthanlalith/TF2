@@ -11,14 +11,14 @@ import copy
 
 
 # Input state
-curr_state = keras.Input(shape=(4,))
+curr_state = keras.Input(shape=(2,))
 
 # 2layer neural network to predict the next state
 encoded = Dense(32)(curr_state)
 encoded = LeakyReLU(alpha=0.2)(encoded)
 encoded = Dense(32)(encoded)
 encoded = LeakyReLU(alpha=0.2)(encoded)
-n_state = layers.Dense(4)(encoded)
+n_state = layers.Dense(2)(encoded)
 
 # This model maps an input to its next state
 AE = keras.Model(inputs=curr_state, outputs=n_state)
@@ -34,23 +34,23 @@ AE.compile(loss='mean_squared_error', optimizer=opt, metrics=['mse'])
 #AE.compile(loss='mean_squared_logarithmic_error', optimizer=opt, metrics=['mse'])
 
 # Import Data
-filename = 'DataAE/NState.npy'
+filename = 'Data/NState.npy'
 ns = pickle.load(open(filename, 'rb'))
-filename = 'DataAE/Action.npy'
+filename = 'Data/Action.npy'
 a = pickle.load(open(filename, 'rb'))
-filename = 'DataAE/State.npy'
+filename = 'Data/State.npy'
 s = pickle.load(open(filename, 'rb'))
-filename = 'DataAE/Diff.npy'
+filename = 'Data/Diff.npy'
 d = pickle.load(open(filename, 'rb'))
 
 # test set
-filename = 'DataAE/TNState.npy'
+filename = 'Data/TNState.npy'
 test_ns = pickle.load(open(filename, 'rb'))
-filename = 'DataAE/TAction.npy'
+filename = 'Data/TAction.npy'
 test_a = pickle.load(open(filename, 'rb'))
-filename = 'DataAE/TState.npy'
+filename = 'Data/TState.npy'
 test_s = pickle.load(open(filename, 'rb'))
-filename = 'DataAE/TDiff.npy'
+filename = 'Data/TDiff.npy'
 test_d = pickle.load(open(filename, 'rb'))
 
 pause = 0 
@@ -116,7 +116,7 @@ n = int(input('Enter your number of test data to predict:'))
 print ("AE next state, True next state,  Difference(true - predicted)")
     
 for i in range(n):
-    for j in range(4):
+    for j in range(2):
         pred_ns[i][j]=float("{:5.6f}".format(pred_ns[i][j]))
         test_ns[i][j]=float("{:5.6f}".format(test_ns[i][j]))
         d_err[i][j]=float("{:5.6f}".format(d_err[i][j]))
@@ -125,20 +125,6 @@ for i in range(n):
     print(pred_ns[i],test_ns[i],d_err[i])
 
 print("------")
-    
-# Denormalise the data
-#pred_ns = denormalise (pred_ns)
-d_err_1 = np.abs(test_ns - pred_ns)
-
-for i in range(n):
-    for j in range(4):
-        pred_ns[i][j]=float("{:5.6f}".format(pred_ns[i][j]))
-        test_ns[i][j]=float("{:5.6f}".format(test_ns[i][j]))
-        d_err_1[i][j]=float("{:5.6f}".format(d_err_1[i][j]))
-
-for i in range(n):
-    print(pred_ns[i],test_ns[i],d_err_1[i])
-print("------")
-
+print(p_err,p_err2)
 
     

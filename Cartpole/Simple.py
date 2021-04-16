@@ -9,16 +9,19 @@ from matplotlib import pyplot
 import pickle 
 import copy
 
+state_dim = 4
+action_dim = 2
+
 
 # Input state
-curr_state = keras.Input(shape=(4,))
+curr_state = keras.Input(shape=(state_dim,))
 
 # 2layer neural network to predict the next state
 encoded = Dense(32)(curr_state)
 encoded = LeakyReLU(alpha=0.2)(encoded)
 encoded = Dense(32)(encoded)
 encoded = LeakyReLU(alpha=0.2)(encoded)
-n_state = layers.Dense(4)(encoded)
+n_state = layers.Dense(state_dim)(encoded)
 
 # This model maps an input to its next state
 AE = keras.Model(inputs=curr_state, outputs=n_state)
@@ -78,7 +81,7 @@ while pause == 1:
 # evaluate the model
 _, train_mse = AE.evaluate(s, ns, verbose=0)
 _, test_mse = AE.evaluate(test_s, test_ns, verbose=0)
-print('Train: %.6f, Test: %.6f' % (train_mse, test_mse))
+print('Train: %.8f, Test: %.8f' % (train_mse, test_mse))
 
 # plot loss during training
 pyplot.subplot(211)
@@ -111,12 +114,12 @@ p_err2 =np.mean(d_err_1*d_err_1,axis=0)
 print(p_err,p_err2)
 
 n=len(test_s)
-n = int(input('Enter your number of test data to predict:'))
+n = 100
 
 print ("AE next state, True next state,  Difference(true - predicted)")
     
 for i in range(n):
-    for j in range(4):
+    for j in range(state_dim):
         pred_ns[i][j]=float("{:5.6f}".format(pred_ns[i][j]))
         test_ns[i][j]=float("{:5.6f}".format(test_ns[i][j]))
         d_err[i][j]=float("{:5.6f}".format(d_err[i][j]))
@@ -125,20 +128,3 @@ for i in range(n):
     print(pred_ns[i],test_ns[i],d_err[i])
 
 print("------")
-    
-# Denormalise the data
-#pred_ns = denormalise (pred_ns)
-d_err_1 = np.abs(test_ns - pred_ns)
-
-for i in range(n):
-    for j in range(4):
-        pred_ns[i][j]=float("{:5.6f}".format(pred_ns[i][j]))
-        test_ns[i][j]=float("{:5.6f}".format(test_ns[i][j]))
-        d_err_1[i][j]=float("{:5.6f}".format(d_err_1[i][j]))
-
-for i in range(n):
-    print(pred_ns[i],test_ns[i],d_err_1[i])
-print("------")
-
-
-    

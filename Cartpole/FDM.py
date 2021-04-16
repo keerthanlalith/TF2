@@ -8,23 +8,22 @@ from tensorflow.keras.layers import LeakyReLU
 from matplotlib import pyplot
 
 #from keras.utils.vis_utils import plot_model
-
-
-
 import pickle 
 import copy
 
+state_dim =4
+action_dim =2
 
 # This is our input image
-curr_state = keras.Input(shape=(4,))
-curr_action = keras.Input(shape=(2,))
+curr_state = keras.Input(shape=(state_dim,))
+curr_action = keras.Input(shape=(action_dim,))
 # "encoded" is the encoded representation of the input
 curr_state_action = concatenate([curr_state, curr_action])
 encoded = Dense(16)(curr_state_action)
 encoded = LeakyReLU(alpha=0.2)(encoded)
 encoded = Dense(16)(encoded)
 encoded = LeakyReLU(alpha=0.2)(encoded)
-n_state = layers.Dense(4)(encoded)
+n_state = layers.Dense(state_dim)(encoded)
 
 # This model maps an input to its encoded representation
 FDM = keras.Model(inputs=[curr_state,curr_action], outputs=n_state)
@@ -49,7 +48,7 @@ s = pickle.load(open(filename, 'rb'))
 filename = 'Data/Diff.npy'
 d = pickle.load(open(filename, 'rb'))
 
-temp = np.zeros((a.size,2))
+temp = np.zeros((a.size,action_dim))
 for i in range(len(a)):
     temp[i][a[i]] = 1
 a = temp
@@ -63,7 +62,7 @@ test_s = pickle.load(open(filename, 'rb'))
 filename = 'Data/TDiff.npy'
 test_d = pickle.load(open(filename, 'rb'))
 
-temp = np.zeros((test_a.size,2))
+temp = np.zeros((test_a.size,action_dim))
 for i in range(len(test_a)):
     temp[i][test_a[i]] = 1
 test_a = temp
@@ -101,7 +100,7 @@ while pause == 1:
 # evaluate the model
 _, train_mse = FDM.evaluate([s,a], ns, verbose=0)
 _, test_mse = FDM.evaluate([test_s,test_a], test_ns, verbose=0)
-print('Train: %.6f, Test: %.6f' % (train_mse, test_mse))
+print('Train: %.8f, Test: %.8f' % (train_mse, test_mse))
 
 # plot loss during training
 pyplot.subplot(211)
@@ -128,15 +127,15 @@ while pause == 1:
 #decoded_imgs = decoder.predict(encoded_imgs)
 
 pred_ns = FDM.predict([test_s,test_a])
-dummystate = np.zeros((1,4))
-dummyaction = np.zeros((1,2))
+p_state = np.zeros((1,state_dim))
+dummyaction = np.zeros((1,action_dim))
 
-for i in range(4):
-    dummystate[0][i] = test_s[0][i]
+for i in range(state_dim):
+    p_state[0][i] = test_s[0][i]
 for i in range(2):
     dummyaction[0][i] = test_a[0][i]
 
-pred_ns_1 = FDM.predict([dummystate,dummyaction])
+pred_ns_1 = FDM.predict([p_state,dummyaction])
 print(pred_ns_1)
 
 print("prediction ")
