@@ -9,16 +9,20 @@ from matplotlib import pyplot
 import pickle 
 import copy
 
+state_dim = 2
+action_dim = 3
+
+
 
 # Input state
-curr_state = keras.Input(shape=(2,))
+curr_state = keras.Input(shape=(state_dim,))
 
 # 2layer neural network to predict the next state
 encoded = Dense(32)(curr_state)
 encoded = LeakyReLU(alpha=0.2)(encoded)
 encoded = Dense(32)(encoded)
 encoded = LeakyReLU(alpha=0.2)(encoded)
-n_state = layers.Dense(2)(encoded)
+n_state = layers.Dense(state_dim)(encoded)
 
 # This model maps an input to its next state
 AE = keras.Model(inputs=curr_state, outputs=n_state)
@@ -40,8 +44,6 @@ filename = 'Data/Action.npy'
 a = pickle.load(open(filename, 'rb'))
 filename = 'Data/State.npy'
 s = pickle.load(open(filename, 'rb'))
-filename = 'Data/Diff.npy'
-d = pickle.load(open(filename, 'rb'))
 
 # test set
 filename = 'Data/TNState.npy'
@@ -50,8 +52,6 @@ filename = 'Data/TAction.npy'
 test_a = pickle.load(open(filename, 'rb'))
 filename = 'Data/TState.npy'
 test_s = pickle.load(open(filename, 'rb'))
-filename = 'Data/TDiff.npy'
-test_d = pickle.load(open(filename, 'rb'))
 
 pause = 0 
 while pause == 1:

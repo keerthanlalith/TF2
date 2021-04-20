@@ -11,7 +11,7 @@ import copy
 import os
 import gym
 ENV = "MountainCar-v0"
-num_steps = 1000
+num_steps = 5000
 
 state_dim=2
 action_dim =3
@@ -71,9 +71,6 @@ filename = 'Data/Action.npy'
 a = pickle.load(open(filename, 'rb'))
 filename = 'Data/State.npy'
 s = pickle.load(open(filename, 'rb'))
-filename = 'Data/Diff.npy'
-d = pickle.load(open(filename, 'rb'))
-
 temp = np.zeros((a.size,action_dim))
 for i in range(len(a)):
     temp[i][a[i]] = 1
@@ -86,8 +83,6 @@ filename = 'Data/TAction.npy'
 test_a = pickle.load(open(filename, 'rb'))
 filename = 'Data/TState.npy'
 test_s = pickle.load(open(filename, 'rb'))
-filename = 'Data/TDiff.npy'
-test_d = pickle.load(open(filename, 'rb'))
 
 temp = np.zeros((test_a.size,action_dim))
 for i in range(len(test_a)):
@@ -166,9 +161,9 @@ while steps < num_steps:
             p_state[0][i] = obs[i]
         pred_ns = AE.predict(p_state)
         FDM_ns_l = np.squeeze(FDM.predict([p_state,left]))
-        FDM_ns_s = np.squeeze(FDM.predict([p_state,stop]))
+        #FDM_ns_s = np.squeeze(FDM.predict([p_state,stop]))
         FDM_ns_r = np.squeeze(FDM.predict([p_state,right]))
-        FDM_ns_both = np.array([FDM_ns_l,FDM_ns_s,FDM_ns_r])
+        FDM_ns_both = np.array([FDM_ns_l,FDM_ns_r])
         state_diff = np.abs(FDM_ns_both-pred_ns)
         cost = np.sum(state_diff,axis=1)
         action_from_IDM = np.argmin(cost, axis=0)
@@ -181,7 +176,7 @@ while steps < num_steps:
             print("True action          ",test_a[m])
             print("action from IDM      ",action_from_IDM)
 
-        action = action_from_IDM
+        action = action_from_IDM*2
         #Num    Action
         #0      Accelerate to the Left
         #1      Don't accelerate
