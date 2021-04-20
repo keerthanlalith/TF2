@@ -10,6 +10,8 @@ import pickle
 import copy
 import os
 import gym
+from feedback import *
+import time
 
 
 state_dim = 4
@@ -40,7 +42,6 @@ fdm_pred_state = layers.Dense(state_dim,name="dense3_FDM")(fdm_h2)
 
 # This model maps an input to its next state
 AE = keras.Model(inputs=AE_state, outputs=n_state,name="AE")
-
 
 # This model maps an input & action to its next state
 FDM = keras.Model(inputs=[curr_state,curr_action], outputs=fdm_pred_state,name="FDM")
@@ -148,6 +149,32 @@ num_steps = 5000
 Episode = 0
 
 env = gym.make(ENV)
+feedback_dict = {
+      H_NULL: 0,
+      H_UP: 0,
+      H_DOWN: 0,
+      H_LEFT: 1,
+      H_RIGHT: 1,
+      H_HOLD: 0,
+      DO_NOTHING: 0
+    }
+env.render()
+human_feedback = Feedback(env)
+for i in range (100):
+    env.render()
+
+    obs, done = env.reset(), False
+    
+    time.sleep(0.2)
+    h_fb = human_feedback.get_h()
+
+    print("Feedback", h_fb)
+
+pause =1
+while pause ==1:
+    pause =1
+
+
 steps = 0
 total_reward = 0
 episodes = 0
