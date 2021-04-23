@@ -129,8 +129,11 @@ while steps < num_steps:
     print("Episode# ",Episode)
     while not done:
         #env.render()
-        for i in range(state_dim):
-            p_state[0][i] = obs[i]
+        #for i in range(state_dim):
+        #    p_state[0][i] = obs[i]
+        p_state = np.reshape(obs, [-1, state_dim])
+        print(obs.shape)
+
         pred_ns = AE.predict(p_state)    
         FDM_ns_l = np.squeeze(FDM.predict([p_state,left]))
         FDM_ns_r = np.squeeze(FDM.predict([p_state,right]))
@@ -170,7 +173,7 @@ while steps < num_steps:
             print("")
 
         episode_rew += rew
-        steps += 1
+        
     #print(steps)
     Episode +=1
     print("Episode reward", episode_rew)

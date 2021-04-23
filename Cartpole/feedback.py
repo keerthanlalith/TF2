@@ -20,10 +20,8 @@ class Feedback:
         if k == key.SPACE:
             self.restart = True
         if k == key.LEFT:
-            print("Left  ")
             self.h_fb = H_LEFT
         if k == key.RIGHT:
-            print("Right ")
             self.h_fb = H_RIGHT
         if k == key.UP:
             self.h_fb = H_UP
