@@ -6,12 +6,18 @@ from tensorflow.keras.optimizers import SGD , Adam, RMSprop
 from tensorflow.keras.layers import Concatenate, Dense, LSTM, Input, concatenate
 from tensorflow.keras.layers import LeakyReLU 
 from matplotlib import pyplot
+import matplotlib.pyplot as plt
+
 import pickle 
 import copy
 import os
 import gym
 from feedback import *
 import time
+from collections import deque
+import random
+from rl_dqn import DeepQNetwork
+from kinematic_model import Kinematic_Model
 
 
 ENV = "CartPole-v1"
@@ -19,6 +25,46 @@ env = gym.make(ENV)
 
 state_dim = env.observation_space.shape[0]
 action_dim = env.action_space.n
+
+########################################################
+# RL Agent for Oracle
+weights_file = 'rldqn_cartpole.h5'
+oracle = DeepQNetwork(state_dim, action_dim, 0.001, 0.95, 1, 0.001, 0.995 )
+oracle.load_weights(weights_file)
+'''
+TEST_Episodes=10
+rewards = [] #Store rewards for graphing
+#Test the agent that was trained
+#   In this section we ALWAYS use exploit don't train any more
+for e_test in range(TEST_Episodes):
+    state,done = env.reset(), False
+    state = np.reshape(state, [1, state_dim])
+    tot_rewards = 0
+    while not done:
+        env.render()
+        action = oracle.test_action(state)
+        KM_nstate = Kinematic_Model(state[0],action)
+        nstate, reward, done, _ = env.step(action)
+        nstate = np.reshape( nstate, [1, state_dim])
+        print("KM_NS : {}\t \t true_NS: {} Diff {}".format(KM_nstate, nstate[0],KM_nstate-nstate[0]))
+
+        tot_rewards += reward
+        #DON'T STORE ANYTHING DURING TESTING
+        state = nstate
+        #done: CartPole fell. 
+        #t_test == 209: CartPole stayed upright
+    rewards.append(tot_rewards)
+    print("episode: {}/{}, score: {}, e: {}".format(e_test, TEST_Episodes, tot_rewards, 0))
+
+env.close()
+
+'''
+
+
+########################################################
+pause = 0 
+while pause == 1:
+    pause = 1
 
 # This model maps an input to its next state
 # Input state
@@ -81,7 +127,7 @@ FDM_loss = 1000.0
 
 AE_buff_s = []
 AE_buff_ns = []
-
+AE_loss = 1000.0
 
 feedback_dict = {
       H_NULL: 0,
@@ -102,7 +148,7 @@ env.render()  # Make the environment visible
 # Initialise Human feedback (call render before this)
 human_feedback = Feedback(env)
 
-num_steps = 500
+num_steps = 5000
 steps = 0
 Episode = 1
 total_reward = []
@@ -127,42 +173,50 @@ while steps < num_steps:
     prev_state = obs
     print("Episode# ",Episode)
     Episode +=1
+    episode_rew = 0
 
     # Iterate over the episode
     while((not terminal) and (not human_feedback.ask_for_done()) ):
-        episode_rew = 0
         
         env.render()  # Make the environment visible
-        time.sleep(0.1)
+        time.sleep(0.15)
         # Get feedback signal
         h_fb = human_feedback.get_h()
+        if  h_fb == 1:
+            print("Oracle",end =" ")
+            oracle_action = oracle.test_action(np.reshape(obs, [1, state_dim]))
+            h_fb = oracle_action + 3
         
         
         if (feedback_dict.get(h_fb) != 0):  # if feedback is not zero i.e. is valid
             # Update policy
-            print("Feedback", h_fb)
+            #oracle_action = oracle.test_action(np.reshape(obs, [1, state_dim]))
+            #h_fb = oracle_action + 3
+            #print("Feedback", h_fb)
 
             # Get new state transition label using feedback
             state_corrected = copy.deepcopy(obs)
             if (h_fb == H_LEFT): # PUSH CART TO LEFT
-                print("Move left")
-                state_corrected[0] -= 0.01 # correction in pos
+                print("Move left",end =" ")
+                #state_corrected = Kinematic_Model(state,0)
+                #state_corrected[0] -= 0.01 # correction in pos
                 state_corrected[1] -= 0.2 # correction in vel
-                state_corrected[2] += 0.01 # correction in angle
-                state_corrected[3] += 0.27 # correction in anglar vel
+                #state_corrected[2] += 0.01 # correction in angle
+                #state_corrected[3] += 0.27 # correction in anglar vel
             elif (h_fb == H_RIGHT):# PUSH CART TO RIGHT
-                print("Move right")
-                state_corrected[0] += 0.01 # correction in pos
+                print("Move right",end =" ")
+                #state_corrected = Kinematic_Model(state,1)
+                #state_corrected[0] += 0.01 # correction in pos
                 state_corrected[1] += 0.2 # correction in vel
-                state_corrected[2] -= 0.01 # correction in angle
-                state_corrected[3] -= 0.27 # correction in anglar vel
+                #state_corrected[2] -= 0.01 # correction in angle
+                #state_corrected[3] -= 0.27 # correction in anglar vel
             
             # Add state transition pair to demo buffer
             AE_buff_s.append(obs)
             AE_buff_ns.append(state_corrected)
 
-            print("State           ",obs)            
-            print("state_corrected ",state_corrected)
+            #print("State           ",obs)            
+            #print("state_corrected ",state_corrected)
             pred_ns = np.reshape(state_corrected, [-1, state_dim])
 
             '''
@@ -215,28 +269,27 @@ while steps < num_steps:
             print("cost                             ",cost)
             print("partial cost                     ",par_cost)
             print("action from IDM  full cost       ",action_from_IDM)
-            print("action from IDM  partial cost    ",action_from_pIDM)
-            if action == 0:
-                print("FDM left")        #0 Push cart to the left
-            else:
-                print("FDM right")        #1 Push cart to the right
+        if action == 0:
+            print("FDM left")        #0 Push cart to the left
+        else:
+            print("FDM right")        #1 Push cart to the right
             print("")
             
         steps += 1
     
     total_reward.append(episode_rew)
-    print('Episode #%d Reward %d' % (Episode, episode_rew))
+    #print('Episode #%d Reward %d' % (Episode, episode_rew))
+    print("## episode: {}, Reward: {}".format(Episode, episode_rew))
 
     #Train Next State predictor
     # Train with batch from Demo buffer (if enough entries exist)
     num = len(AE_buff_s)
-    print("num",num)
-    if(num >= 64): # batch size 64
+    if(num >= 64) and feedback_dict.get(h_fb) != 0: # batch size 64
         print("Training AE")
-        temp_s = np.array(AE_buff_s)
-        temp_ns = np.array(AE_buff_ns)
         # do you need to run for 5 epochs
-        history_AE = AE.fit(x=temp_s, y=temp_ns,batch_size=64,shuffle=True, verbose=1)
+        history_AE = AE.fit(x=np.array(AE_buff_s), y=np.array(AE_buff_ns),batch_size=64,epochs=5,shuffle=True, verbose=False)
+        AE_loss = history_AE.history['loss'][-1]
+        print("AE loss",AE_loss)
 
 
     if FDM_loss > 0.0001:
@@ -246,11 +299,19 @@ while steps < num_steps:
         temp_a = np.zeros((len(FDM_buff_a),action_dim))
         for i in range(len(FDM_buff_a)):
             temp_a[i][FDM_buff_a[i]] =1
-        temp_ns = np.array(FDM_buff_ns)
         history_FDM=FDM.fit(x=[temp_s,temp_a], y=np.array(FDM_buff_ns),epochs=5,batch_size=32, shuffle=True,verbose=False)
-        history_dict_FDM = history_FDM.history
         FDM_loss = history_FDM.history['loss'][-1]
         print("FDM loss",FDM_loss)
 
+for i in range(Episode):
+    print("episode: {}, Reward: {}".format(i, total_reward[i-1]))
 
-print("Average reward", total_reward)
+total_reward =np.array(total_reward)
+rolling_average = np.convolve(total_reward, np.ones(100)/100)
+
+plt.plot(total_reward)
+plt.plot(rolling_average, color='black')
+plt.axhline(y=195, color='r', linestyle='-') #Solved Line
+plt.xlim( (0,Episode) )
+plt.ylim( (0,220) )
+plt.show()

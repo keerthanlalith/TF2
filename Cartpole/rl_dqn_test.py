@@ -12,9 +12,9 @@ import random
 from rl_dqn import DeepQNetwork,learning_rate,discount_rate
 
 #Create Gym
-from gym import wrappers
+#from gym import wrappers
 env = gym.make('CartPole-v1')
-env.seed(50) #Set the seed to keep the environment consistent across runs
+#env.seed(50) #Set the seed to keep the environment consistent across runs
 
 weights_file = 'rldqn_cartpole.h5'
 
