@@ -19,8 +19,10 @@ import random
 from rl_dqn import DeepQNetwork
 from kinematic_model import Kinematic_Model
 
-
-ENV = "CartPole-v1"
+trial_no = '9e1'
+if not os.path.exists('log_files/'+trial_no):
+    os.makedirs('log_files/'+trial_no)
+ENV = "CartPole-v0"
 env = gym.make(ENV)
 
 state_dim = env.observation_space.shape[0]
@@ -148,16 +150,53 @@ env.render()  # Make the environment visible
 # Initialise Human feedback (call render before this)
 human_feedback = Feedback(env)
 
-num_steps = 5000
+num_steps = 500
 steps = 0
 Episode = 1
 total_reward = []
+feedback_rate = []
 
 state = env.reset()
 #state = np.reshape(state, [-1, state_dim])
 
 prev_s = state
 a = np.random.uniform(-1,1,action_dim)
+
+
+print("RANDOM ACTION")
+
+while steps < num_steps:
+    obs, done = env.reset(), False
+    episode_rew = 0
+    while not done:
+        #env.render()
+        #if steps % 200==0:
+        #    obs, done = env.reset(), False
+        state_1 = obs
+
+        action = env.action_space.sample()
+        obs, rew, done, _ = env.step(action)
+
+        FDM_buff_s.append(state_1)
+        FDM_buff_a.append(action)
+        state_2 = obs
+        FDM_buff_ns.append(state_2)
+        steps+=1
+
+
+print("Training FDM")
+#Train FDM every episode,
+temp_s = np.array(FDM_buff_s)
+temp_a = np.zeros((len(FDM_buff_a),action_dim))
+for i in range(len(FDM_buff_a)):
+    temp_a[i][FDM_buff_a[i]] =1
+history_FDM=FDM.fit(x=[temp_s,temp_a], y=np.array(FDM_buff_ns),epochs=2000,batch_size=32, shuffle=True,verbose=True)
+FDM_loss = history_FDM.history['loss'][-1]
+print("FDM loss",FDM_loss)
+
+pause = 1
+while pause == 1:
+    pause = 1
 
 print("3")
 time.sleep(1)
@@ -168,22 +207,25 @@ time.sleep(1)
 
 
 
-while steps < num_steps:
+while Episode < 50:
     obs, terminal = env.reset(), False
     prev_state = obs
     print("Episode# ",Episode)
-    Episode +=1
+    
     episode_rew = 0
+    h_counter = 0
+    t_counter = 0
 
     # Iterate over the episode
     while((not terminal) and (not human_feedback.ask_for_done()) ):
         
         env.render()  # Make the environment visible
-        time.sleep(0.15)
+        time.sleep(0.1)
+        
         # Get feedback signal
         h_fb = human_feedback.get_h()
         if  h_fb == 1:
-            print("Oracle",end =" ")
+            print("Oracle")
             oracle_action = oracle.test_action(np.reshape(obs, [1, state_dim]))
             h_fb = oracle_action + 3
         
@@ -194,20 +236,22 @@ while steps < num_steps:
             #h_fb = oracle_action + 3
             #print("Feedback", h_fb)
 
+            h_counter += 1
+
             # Get new state transition label using feedback
             state_corrected = copy.deepcopy(obs)
             if (h_fb == H_LEFT): # PUSH CART TO LEFT
-                print("Move left",end =" ")
+                print("Feedback left\t",end =" ")
                 #state_corrected = Kinematic_Model(state,0)
-                #state_corrected[0] -= 0.01 # correction in pos
-                state_corrected[1] -= 0.2 # correction in vel
+                state_corrected[0] -= 0.01 # correction in pos
+                #state_corrected[1] -= 0.2 # correction in vel
                 #state_corrected[2] += 0.01 # correction in angle
                 #state_corrected[3] += 0.27 # correction in anglar vel
             elif (h_fb == H_RIGHT):# PUSH CART TO RIGHT
-                print("Move right",end =" ")
+                print("Feedback right\t",end =" ")
                 #state_corrected = Kinematic_Model(state,1)
-                #state_corrected[0] += 0.01 # correction in pos
-                state_corrected[1] += 0.2 # correction in vel
+                state_corrected[0] += 0.01 # correction in pos
+                #state_corrected[1] += 0.2 # correction in vel
                 #state_corrected[2] -= 0.01 # correction in angle
                 #state_corrected[3] -= 0.27 # correction in anglar vel
             
@@ -236,10 +280,16 @@ while steps < num_steps:
                 # do you need to run for 5 epochs
                 history_AE = AE.fit(x=temp_s, y=temp_ns,batch_size=64,shuffle=True, verbose=1)
             '''
+            if(len(AE_buff_s) >= 64): # batch size 64
+                print("Training AE")
+                # do you need to run for 5 epochs
+                history_AE = AE.fit(x=np.array(AE_buff_s), y=np.array(AE_buff_ns),batch_size=64,shuffle=True, verbose=False)
+                AE_loss = history_AE.history['loss'][-1]
+                print("AE loss",AE_loss)
 
         else:
             # Use current policy
-            print("Using current policy")
+            print("Policy \t\t",end =" ")
             p_state = np.reshape(obs, [-1, state_dim])
             pred_ns = AE.predict(p_state)
 
@@ -273,21 +323,27 @@ while steps < num_steps:
             print("FDM left")        #0 Push cart to the left
         else:
             print("FDM right")        #1 Push cart to the right
-            print("")
+        print("")
             
         steps += 1
+        t_counter+=1
+
     
+    
+    feedback_rate.append(h_counter/t_counter)
     total_reward.append(episode_rew)
+
     #print('Episode #%d Reward %d' % (Episode, episode_rew))
-    print("## episode: {}, Reward: {}".format(Episode, episode_rew))
+    print("## episode: {}, Reward: {}, h_counter: {}, t_counter: {}, feedback_rate: {} ".format(Episode, episode_rew,h_counter,t_counter,h_counter/t_counter))
+    Episode +=1
 
     #Train Next State predictor
     # Train with batch from Demo buffer (if enough entries exist)
     num = len(AE_buff_s)
-    if(num >= 64) and feedback_dict.get(h_fb) != 0: # batch size 64
+    if(num >= 64) and AE_loss > 0.0001: # batch size 64
         print("Training AE")
         # do you need to run for 5 epochs
-        history_AE = AE.fit(x=np.array(AE_buff_s), y=np.array(AE_buff_ns),batch_size=64,epochs=5,shuffle=True, verbose=False)
+        history_AE = AE.fit(x=np.array(AE_buff_s), y=np.array(AE_buff_ns),batch_size=64,epochs=10,shuffle=True, verbose=False)
         AE_loss = history_AE.history['loss'][-1]
         print("AE loss",AE_loss)
 
@@ -299,7 +355,7 @@ while steps < num_steps:
         temp_a = np.zeros((len(FDM_buff_a),action_dim))
         for i in range(len(FDM_buff_a)):
             temp_a[i][FDM_buff_a[i]] =1
-        history_FDM=FDM.fit(x=[temp_s,temp_a], y=np.array(FDM_buff_ns),epochs=5,batch_size=32, shuffle=True,verbose=False)
+        history_FDM=FDM.fit(x=[temp_s,temp_a], y=np.array(FDM_buff_ns),epochs=500,batch_size=32, shuffle=True,verbose=False)
         FDM_loss = history_FDM.history['loss'][-1]
         print("FDM loss",FDM_loss)
 
@@ -308,10 +364,36 @@ for i in range(Episode):
 
 total_reward =np.array(total_reward)
 rolling_average = np.convolve(total_reward, np.ones(100)/100)
+feedback_rate = np.array(feedback_rate) * 100
 
 plt.plot(total_reward)
 plt.plot(rolling_average, color='black')
+plt.plot(feedback_rate, color='green')
 plt.axhline(y=195, color='r', linestyle='-') #Solved Line
 plt.xlim( (0,Episode) )
 plt.ylim( (0,220) )
 plt.show()
+
+
+print("Saving Reward")
+filename = 'log_files/'+trial_no+'/total_reward.npy'
+pickle.dump(total_reward, open(filename, 'wb'))
+filename = 'log_files/'+trial_no+'/feedback_rate.npy'
+pickle.dump(feedback_rate, open(filename, 'wb'))
+
+AE.save('log_files/'+trial_no+'/AE')
+FDM.save('log_files/'+trial_no+'/FDM')
+
+'''
+
+else: 
+    # save state, action, nstate
+    filename = 'Data/State.npy'
+    pickle.dump(s, open(filename, 'wb'))
+    filename = 'Data/Action.npy'
+    pickle.dump(a, open(filename, 'wb'))
+    filename = 'Data/NState.npy'
+    pickle.dump(ns, open(filename, 'wb'))
+    filename = 'Data/Diff.npy'
+    pickle.dump(d,open(filename,'wb'))
+'''

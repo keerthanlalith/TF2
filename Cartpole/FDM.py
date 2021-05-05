@@ -45,8 +45,8 @@ filename = 'Data/Action.npy'
 a = pickle.load(open(filename, 'rb'))
 filename = 'Data/State.npy'
 s = pickle.load(open(filename, 'rb'))
-filename = 'Data/Diff.npy'
-d = pickle.load(open(filename, 'rb'))
+#filename = 'Data/Diff.npy'
+#d = pickle.load(open(filename, 'rb'))
 
 temp = np.zeros((a.size,action_dim))
 for i in range(len(a)):
@@ -59,8 +59,8 @@ filename = 'Data/TAction.npy'
 test_a = pickle.load(open(filename, 'rb'))
 filename = 'Data/TState.npy'
 test_s = pickle.load(open(filename, 'rb'))
-filename = 'Data/TDiff.npy'
-test_d = pickle.load(open(filename, 'rb'))
+#filename = 'Data/TDiff.npy'
+#test_d = pickle.load(open(filename, 'rb'))
 
 temp = np.zeros((test_a.size,action_dim))
 for i in range(len(test_a)):
