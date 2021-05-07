@@ -23,7 +23,7 @@ import getch
 #from rl_dqn import DeepQNetwork
 from kinematic_model import Kinematic_Model
 
-trial_no = '2a4'
+trial_no = '2a22'
 if not os.path.exists('log_files/'+trial_no):
     os.makedirs('log_files/'+trial_no)
 ENV = "MountainCar-v0"
@@ -224,6 +224,7 @@ while Episode < 100:
                 # do you need to run for 5 epochs
                 history_AE = AE.fit(x=temp_s, y=temp_ns,batch_size=64,shuffle=True, verbose=1)
             '''
+            
             if(len(AE_buff_s) >= 64): # batch size 64
                 #print("Training AE")
                 # do you need to run for 5 epochs
@@ -263,7 +264,7 @@ while Episode < 100:
         FDM_buff_s.append(prev_state)
         FDM_buff_a.append(action)
         FDM_buff_ns.append(obs)
-        verbose = True
+        verbose = False
         if verbose ==True:
             print("Action                           ",action)
             print("Curr state                       ",prev_state)
@@ -313,7 +314,7 @@ while Episode < 100:
         temp_a = np.zeros((len(FDM_buff_a),action_dim))
         for i in range(len(FDM_buff_a)):
             temp_a[i][FDM_buff_a[i]] =1
-        history_FDM=FDM.fit(x=[temp_s,temp_a], y=np.array(FDM_buff_ns),epochs=10,batch_size=32, shuffle=True,verbose=False)
+        history_FDM=FDM.fit(x=[temp_s,temp_a], y=np.array(FDM_buff_ns),epochs=20,batch_size=32, shuffle=True,verbose=False)
         FDM_loss = history_FDM.history['loss'][-1]
         print("FDM loss",FDM_loss)
 
@@ -341,17 +342,3 @@ pickle.dump(feedback_rate, open(filename, 'wb'))
 
 AE.save('log_files/'+trial_no+'/AE')
 FDM.save('log_files/'+trial_no+'/FDM')
-
-'''
-
-else: 
-    # save state, action, nstate
-    filename = 'Data/State.npy'
-    pickle.dump(s, open(filename, 'wb'))
-    filename = 'Data/Action.npy'
-    pickle.dump(a, open(filename, 'wb'))
-    filename = 'Data/NState.npy'
-    pickle.dump(ns, open(filename, 'wb'))
-    filename = 'Data/Diff.npy'
-    pickle.dump(d,open(filename,'wb'))
-'''

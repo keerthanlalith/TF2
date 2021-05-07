@@ -23,7 +23,7 @@ import getch
 #from rl_dqn import DeepQNetwork
 from kinematic_model import Kinematic_Model
 
-trial_no = '2a2'
+trial_no = '2a20'
 if not os.path.exists('log_files/'+trial_no):
     os.makedirs('log_files/'+trial_no)
 ENV = "MountainCar-v0"
@@ -155,7 +155,7 @@ time.sleep(1)
 
 
 
-while Episode < 50:
+while Episode < 30:
     obs, terminal = env.reset(), False
     prev_state = obs
     print("Episode# ",Episode)
@@ -167,8 +167,8 @@ while Episode < 50:
     # Iterate over the episode
     while((not terminal) and (not human_feedback.ask_for_done()) ):
         
-        #env.render()  # Make the environment visible
-        #time.sleep(0.01)
+        env.render()  # Make the environment visible
+        time.sleep(0.01)
 
         
         # Get feedback signal
@@ -180,7 +180,8 @@ while Episode < 50:
         elif oracle_action ==2:
             h_fb =4
               
-        if (np.random.uniform(0,1)<=np.exp(-(Episode-5)/10)):
+        if (np.random.uniform(0,1)<= 1 ):
+        
             # Update policy
             print("Feedback", h_fb)
             h_counter += 1
@@ -224,6 +225,7 @@ while Episode < 50:
                 # do you need to run for 5 epochs
                 history_AE = AE.fit(x=temp_s, y=temp_ns,batch_size=64,shuffle=True, verbose=1)
             '''
+            
             if(len(AE_buff_s) >= 64): # batch size 64
                 #print("Training AE")
                 # do you need to run for 5 epochs
@@ -252,7 +254,8 @@ while Episode < 50:
         action_from_IDM = np.argmin(cost, axis=0)*2
         action_from_pIDM = np.argmin(p_cost, axis=0)*2
         
-        action = oracle.decide(obs)
+        #action = oracle.decide(obs)
+        action = action_from_IDM
 
         prev_state = obs
         obs, reward, terminal, _ = env.step(action)
@@ -262,8 +265,9 @@ while Episode < 50:
         FDM_buff_s.append(prev_state)
         FDM_buff_a.append(action)
         FDM_buff_ns.append(obs)
-        verbose = True
+        verbose = False
         if verbose ==True:
+            print("Action                           ",action)
             print("Curr state                       ",prev_state)
             print("True next state                  ",obs)
             #print("AE pred Nstate                   ",pred_ns[0],pred_ns[0])
@@ -273,7 +277,7 @@ while Episode < 50:
             #print("state diff                       ",state_diff[0],state_diff[1])
             #print("cost                             ",cost)
             #print("partial cost                     ",p_cost)
-            #print("action from IDM  full cost       ",action_from_IDM)
+            print("action from IDM  full cost       ",action_from_IDM)
             #print("action from IDM  p cost          ",action_from_pIDM)
 
             #if action == 0:
@@ -297,9 +301,8 @@ while Episode < 50:
     #Train Next State predictor
     # Train with batch from Demo buffer (if enough entries exist)
     num = len(AE_buff_s)
-    if(num >= 64) and AE_loss > 0.0001: # batch size 64
+    if(num >= 64) and AE_loss > 0.000001: # batch size 64
         print("Training AE")
-        # do you need to run for 5 epochs
         history_AE = AE.fit(x=np.array(AE_buff_s), y=np.array(AE_buff_ns),batch_size=64,epochs=10,shuffle=True, verbose=False)
         AE_loss = history_AE.history['loss'][-1]
         print("AE loss",AE_loss)
@@ -312,9 +315,182 @@ while Episode < 50:
         temp_a = np.zeros((len(FDM_buff_a),action_dim))
         for i in range(len(FDM_buff_a)):
             temp_a[i][FDM_buff_a[i]] =1
-        history_FDM=FDM.fit(x=[temp_s,temp_a], y=np.array(FDM_buff_ns),epochs=50,batch_size=32, shuffle=True,verbose=False)
+        history_FDM=FDM.fit(x=[temp_s,temp_a], y=np.array(FDM_buff_ns),epochs=20,batch_size=32, shuffle=True,verbose=False)
         FDM_loss = history_FDM.history['loss'][-1]
         print("FDM loss",FDM_loss)
+
+print("Init")
+while True:
+    char = getch.getch()
+    if char =='c':
+        print("Phase 2")
+        break
+
+while Episode < 100:
+    obs, terminal = env.reset(), False
+    prev_state = obs
+    print("Episode# ",Episode)
+    
+    episode_rew = 0
+    h_counter = 0
+    t_counter = 0
+
+    # Iterate over the episode
+    while((not terminal) and (not human_feedback.ask_for_done()) ):
+        
+        env.render()  # Make the environment visible
+        time.sleep(0.01)
+
+        
+        # Get feedback signal
+        h_fb = human_feedback.get_h() 
+        
+
+              
+        if (feedback_dict.get(h_fb) != 0):  # if feedback is not zero i.e. is valid
+            oracle_action = oracle.decide(obs)
+            if oracle_action ==0:
+                h_fb =3
+            elif oracle_action ==2:
+                h_fb =4
+
+            # Update policy
+            print("Feedback", h_fb)
+            h_counter += 1
+
+            # Get new state transition label using feedback
+            state_corrected = copy.deepcopy(obs)
+            if (h_fb == H_LEFT): # PUSH CART TO LEFT
+                #print("Feedback left\t")
+                #state_corrected = Kinematic_Model(state,0)
+                state_corrected[0] -= 0.1 # correction in pos
+                #state_corrected[1] -= 0.2 # correction in vel
+            elif (h_fb == H_RIGHT):# PUSH CART TO RIGHT
+                #print("Feedback right\t")
+                #state_corrected = Kinematic_Model(state,1)
+                state_corrected[0] += 0.1 # correction in pos
+                #state_corrected[1] += 0.2 # correction in vel
+                
+            
+            # Add state transition pair to demo buffer
+            AE_buff_s.append(obs)
+            AE_buff_ns.append(state_corrected)
+            #print("State                            ",obs)            
+            #print("state_corrected                  ",state_corrected)
+            pred_ns = np.reshape(state_corrected, [-1, state_dim])
+            #print("pred_ns                          ",pred_ns)
+
+            '''
+            # Update policy (immediate)
+            temp_s = np.array(p_state)
+            temp_ns = np.array(state_corrected)
+            history_AE = AE.fit(x=temp_s, y=temp_ns, verbose=1)    
+
+
+            # Train with batch from Demo buffer (if enough entries exist)
+            num = len(AE_buff_s)
+            print("num",num)
+            if(num >= 64): # batch size 64
+                print("Training AE")
+                temp_s = np.array(AE_buff_s)
+                temp_ns = np.array(AE_buff_ns)
+                # do you need to run for 5 epochs
+                history_AE = AE.fit(x=temp_s, y=temp_ns,batch_size=64,shuffle=True, verbose=1)
+            '''
+            
+            if(len(AE_buff_s) >= 64): # batch size 64
+                #print("Training AE")
+                # do you need to run for 5 epochs
+                history_AE = AE.fit(x=np.array(AE_buff_s), y=np.array(AE_buff_ns),epochs=10,batch_size=64,shuffle=True, verbose=False)
+                AE_loss = history_AE.history['loss'][-1]
+                #print("AE loss",AE_loss)
+
+        else:
+            # Use current policy
+            print("Policy!!!!!!!!!!")
+            p_state = np.reshape(obs, [-1, state_dim])
+            pred_ns = AE.predict(p_state)
+
+        # Get action from ifdm
+        FDM_ns_l = np.squeeze(FDM.predict([p_state,left]))
+        FDM_ns_r = np.squeeze(FDM.predict([p_state,right]))
+        #FDM_ns_l = Kinematic_Model(obs,0)
+        #FDM_ns_r = Kinematic_Model(obs,2)
+        FDM_ns_both = np.array([FDM_ns_l,FDM_ns_r])
+        state_diff  = np.abs(FDM_ns_both-pred_ns)
+        cost = np.sum(state_diff,axis=1)      
+        p_cost_l = (FDM_ns_l[0]-pred_ns[0][0])
+        p_cost_r = (FDM_ns_r[0]-pred_ns[0][0])
+        p_cost = np.abs(np.array([p_cost_l,p_cost_r]))
+
+        action_from_IDM = np.argmin(cost, axis=0)*2
+        action_from_pIDM = np.argmin(p_cost, axis=0)*2
+        
+        #action = oracle.decide(obs)
+        action = action_from_IDM
+
+        prev_state = obs
+        obs, reward, terminal, _ = env.step(action)
+        episode_rew += reward
+
+        # Add state transition pair to demo buffer
+        FDM_buff_s.append(prev_state)
+        FDM_buff_a.append(action)
+        FDM_buff_ns.append(obs)
+        verbose = False
+        if verbose ==True:
+            print("Action                           ",action)
+            print("Curr state                       ",prev_state)
+            print("True next state                  ",obs)
+            #print("AE pred Nstate                   ",pred_ns[0],pred_ns[0])
+            print("FDM both next state               {}\t{}".format(FDM_ns_both[0],FDM_ns_both[1]))
+            print("True both next state              {}\t{}".format(Kinematic_Model(prev_state,0),Kinematic_Model(prev_state,2)))
+            print("Diff                              {}\t{}".format(np.abs(Kinematic_Model(prev_state,0)-FDM_ns_both[0]),np.abs(Kinematic_Model(prev_state,2)-FDM_ns_both[1])))
+            #print("state diff                       ",state_diff[0],state_diff[1])
+            #print("cost                             ",cost)
+            #print("partial cost                     ",p_cost)
+            print("action from IDM  full cost       ",action_from_IDM)
+            #print("action from IDM  p cost          ",action_from_pIDM)
+
+            #if action == 0:
+            #    print("FDM left")        #0 Push cart to the left
+            #else:
+            #    print("FDM right")        #1 Push cart to the right
+            print("_____________________________________________________________________")
+            
+        steps += 1
+        t_counter+=1
+
+    
+    
+    feedback_rate.append(h_counter/t_counter)
+    total_reward.append(episode_rew)
+
+    #print('Episode #%d Reward %d' % (Episode, episode_rew))
+    print("## episode: {}, Reward: {}, h_counter: {}, t_counter: {}, feedback_rate: {} ".format(Episode, episode_rew,h_counter,t_counter,h_counter/t_counter))
+    Episode +=1
+
+    #Train Next State predictor
+    # Train with batch from Demo buffer (if enough entries exist)
+    num = len(AE_buff_s)
+    if(num >= 64) and AE_loss > 0.000001: # batch size 64
+        print("Training AE")
+        history_AE = AE.fit(x=np.array(AE_buff_s), y=np.array(AE_buff_ns),batch_size=64,epochs=10,shuffle=True, verbose=False)
+        AE_loss = history_AE.history['loss'][-1]
+        print("AE loss",AE_loss)
+
+
+    if FDM_loss > 0.000001:
+        print("Training FDM")
+        #Train FDM every episode,
+        temp_s = np.array(FDM_buff_s)
+        temp_a = np.zeros((len(FDM_buff_a),action_dim))
+        for i in range(len(FDM_buff_a)):
+            temp_a[i][FDM_buff_a[i]] =1
+        history_FDM=FDM.fit(x=[temp_s,temp_a], y=np.array(FDM_buff_ns),epochs=20,batch_size=32, shuffle=True,verbose=False)
+        FDM_loss = history_FDM.history['loss'][-1]
+        print("FDM loss",FDM_loss)
+
 
 for i in range(Episode):
     print("episode: {}, Reward: {}".format(i, total_reward[i-1]))
@@ -340,17 +516,3 @@ pickle.dump(feedback_rate, open(filename, 'wb'))
 
 AE.save('log_files/'+trial_no+'/AE')
 FDM.save('log_files/'+trial_no+'/FDM')
-
-'''
-
-else: 
-    # save state, action, nstate
-    filename = 'Data/State.npy'
-    pickle.dump(s, open(filename, 'wb'))
-    filename = 'Data/Action.npy'
-    pickle.dump(a, open(filename, 'wb'))
-    filename = 'Data/NState.npy'
-    pickle.dump(ns, open(filename, 'wb'))
-    filename = 'Data/Diff.npy'
-    pickle.dump(d,open(filename,'wb'))
-'''

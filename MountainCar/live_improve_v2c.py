@@ -23,7 +23,7 @@ import getch
 #from rl_dqn import DeepQNetwork
 from kinematic_model import Kinematic_Model
 
-trial_no = '2ac'
+trial_no = '2c'
 if not os.path.exists('log_files/'+trial_no):
     os.makedirs('log_files/'+trial_no)
 ENV = "MountainCar-v0"
@@ -155,7 +155,7 @@ time.sleep(1)
 
 
 
-while Episode < 50:
+while Episode < 100:
     obs, terminal = env.reset(), False
     prev_state = obs
     print("Episode# ",Episode)
@@ -180,7 +180,7 @@ while Episode < 50:
         elif oracle_action ==2:
             h_fb =4
               
-        if (np.random.uniform(0,1)<=np.exp(-(Episode-5)/10)):
+        if (np.random.uniform(0,1)<=np.exp(-(Episode-10)/20)):
             # Update policy
             print("Feedback", h_fb)
             h_counter += 1
@@ -224,11 +224,12 @@ while Episode < 50:
                 # do you need to run for 5 epochs
                 history_AE = AE.fit(x=temp_s, y=temp_ns,batch_size=64,shuffle=True, verbose=1)
             '''
-            if(len(AE_buff_s) >= 64): # batch size 64
+            
+            #if(len(AE_buff_s) >= 64): # batch size 64
                 #print("Training AE")
                 # do you need to run for 5 epochs
-                history_AE = AE.fit(x=np.array(AE_buff_s), y=np.array(AE_buff_ns),epochs=10,batch_size=64,shuffle=True, verbose=False)
-                AE_loss = history_AE.history['loss'][-1]
+                #history_AE = AE.fit(x=np.array(AE_buff_s), y=np.array(AE_buff_ns),epochs=1,batch_size=64,shuffle=True, verbose=False)
+                #AE_loss = history_AE.history['loss'][-1]
                 #print("AE loss",AE_loss)
 
         else:
@@ -252,7 +253,8 @@ while Episode < 50:
         action_from_IDM = np.argmin(cost, axis=0)*2
         action_from_pIDM = np.argmin(p_cost, axis=0)*2
         
-        action = oracle.decide(obs)
+        #action = oracle.decide(obs)
+        action = action_from_IDM
 
         prev_state = obs
         obs, reward, terminal, _ = env.step(action)
@@ -262,8 +264,9 @@ while Episode < 50:
         FDM_buff_s.append(prev_state)
         FDM_buff_a.append(action)
         FDM_buff_ns.append(obs)
-        verbose = True
+        verbose = False
         if verbose ==True:
+            print("Action                           ",action)
             print("Curr state                       ",prev_state)
             print("True next state                  ",obs)
             #print("AE pred Nstate                   ",pred_ns[0],pred_ns[0])
@@ -273,14 +276,14 @@ while Episode < 50:
             #print("state diff                       ",state_diff[0],state_diff[1])
             #print("cost                             ",cost)
             #print("partial cost                     ",p_cost)
-            #print("action from IDM  full cost       ",action_from_IDM)
+            print("action from IDM  full cost       ",action_from_IDM)
             #print("action from IDM  p cost          ",action_from_pIDM)
 
-            #if action == 0:
-            #    print("FDM left")        #0 Push cart to the left
-            #else:
-            #    print("FDM right")        #1 Push cart to the right
-            print("_____________________________________________________________________")
+        if action == 0:
+            print("FDM left")        #0 Push cart to the left
+        else:
+            print("FDM right")        #1 Push cart to the right
+        #print("_____________________________________________________________________")
             
         steps += 1
         t_counter+=1
@@ -297,21 +300,21 @@ while Episode < 50:
     #Train Next State predictor
     # Train with batch from Demo buffer (if enough entries exist)
     num = len(AE_buff_s)
-    if(num >= 64) and AE_loss > 0.0001: # batch size 64
+    if(num >= 64) and AE_loss > 0.000001: # batch size 64
         print("Training AE")
-        history_AE = AE.fit(x=np.array(AE_buff_s), y=np.array(AE_buff_ns),batch_size=64,epochs=10,shuffle=True, verbose=False)
+        history_AE = AE.fit(x=np.array(AE_buff_s), y=np.array(AE_buff_ns),batch_size=64,epochs=20,shuffle=True, verbose=False)
         AE_loss = history_AE.history['loss'][-1]
         print("AE loss",AE_loss)
 
 
-    if FDM_loss > 0.000001:
+    if FDM_loss > 0.0000025:
         print("Training FDM")
         #Train FDM every episode,
         temp_s = np.array(FDM_buff_s)
         temp_a = np.zeros((len(FDM_buff_a),action_dim))
         for i in range(len(FDM_buff_a)):
             temp_a[i][FDM_buff_a[i]] =1
-        history_FDM=FDM.fit(x=[temp_s,temp_a], y=np.array(FDM_buff_ns),epochs=5,batch_size=32, shuffle=True,verbose=False)
+        history_FDM=FDM.fit(x=[temp_s,temp_a], y=np.array(FDM_buff_ns),epochs=20,batch_size=32, shuffle=True,verbose=False)
         FDM_loss = history_FDM.history['loss'][-1]
         print("FDM loss",FDM_loss)
 
@@ -339,17 +342,3 @@ pickle.dump(feedback_rate, open(filename, 'wb'))
 
 AE.save('log_files/'+trial_no+'/AE')
 FDM.save('log_files/'+trial_no+'/FDM')
-
-'''
-
-else: 
-    # save state, action, nstate
-    filename = 'Data/State.npy'
-    pickle.dump(s, open(filename, 'wb'))
-    filename = 'Data/Action.npy'
-    pickle.dump(a, open(filename, 'wb'))
-    filename = 'Data/NState.npy'
-    pickle.dump(ns, open(filename, 'wb'))
-    filename = 'Data/Diff.npy'
-    pickle.dump(d,open(filename,'wb'))
-'''
