@@ -23,7 +23,7 @@ import getch
 #from rl_dqn import DeepQNetwork
 from kinematic_model import Kinematic_Model
 
-trial_no = '2f2'
+trial_no = '2f6'
 if not os.path.exists('log_files/'+trial_no):
     os.makedirs('log_files/'+trial_no)
 ENV = "MountainCar-v0"
@@ -166,9 +166,10 @@ while Episode < 100:
 
     # Iterate over the episode
     while((not terminal) and (not human_feedback.ask_for_done()) ):
-        
-        #env.render()  # Make the environment visible
-        #time.sleep(0.01)
+
+        if Episode>90:
+            env.render()  # Make the environment visible
+            time.sleep(0.01)
 
         
         # Get feedback signal
@@ -331,7 +332,9 @@ plt.plot(feedback_rate, color='green')
 plt.axhline(y=195, color='r', linestyle='-') #Solved Line
 plt.xlim( (0,Episode) )
 plt.ylim( (0,220) )
+plt.savefig('log_files/'+trial_no+'results.png')
 plt.show()
+
 
 
 print("Saving Reward")

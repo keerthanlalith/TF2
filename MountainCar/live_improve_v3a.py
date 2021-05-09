@@ -23,7 +23,7 @@ import getch
 #from rl_dqn import DeepQNetwork
 from kinematic_model import Kinematic_Model
 
-trial_no = '2f2'
+trial_no = '3a2'
 if not os.path.exists('log_files/'+trial_no):
     os.makedirs('log_files/'+trial_no)
 ENV = "MountainCar-v0"
@@ -32,7 +32,7 @@ env = gym.make(ENV)
 state_dim = env.observation_space.shape[0]
 action_dim = env.action_space.n
 
-
+reward_writer = open('log_files/'+trial_no+"/Reward.txt", "w") # Log episode result
 
 
 ########################################################
@@ -125,9 +125,9 @@ feedback_dict = {
 ################################################################################
 def Test_policy():
     print("[--------------Test Policy--------------]")
-    print("[---------------------------------------]")
 
     Test_episode = 1
+    reward_writer.write("\n" + "[Episode #" + str(Episode)+"]")
     while Test_episode  <= 10:
 
         obs, terminal = env.reset(), False
@@ -149,6 +149,7 @@ def Test_policy():
             episode_rew += reward
 
         print("Episode# {} Reward : {}".format(Test_episode,episode_rew))
+        reward_writer.write("\n" + "Background Trial: " + str(Test_episode) + ", reward: " + str(episode_rew))
         Test_episode+=1
     print("[---------------------------------------]")
 
@@ -379,6 +380,7 @@ plt.plot(feedback_rate, color='green')
 plt.axhline(y=195, color='r', linestyle='-') #Solved Line
 plt.xlim( (0,Episode) )
 plt.ylim( (0,220) )
+plt.savefig('log_files/'+trial_no+'/results.png')
 plt.show()
 
 
@@ -390,3 +392,4 @@ pickle.dump(feedback_rate, open(filename, 'wb'))
 
 AE.save('log_files/'+trial_no+'/AE')
 FDM.save('log_files/'+trial_no+'/FDM')
+reward_writer.close()
