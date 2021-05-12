@@ -23,7 +23,7 @@ import getch
 #from rl_dqn import DeepQNetwork
 from kinematic_model import Kinematic_Model
 
-trial_no = '4c9'
+trial_no = '4g2'
 if not os.path.exists('Log_files/'+trial_no):
     os.makedirs('Log_files/'+trial_no)
 ENV = "MountainCar-v0"
@@ -141,9 +141,6 @@ def Test_policy():
         Test_episode+=1
     print("[---------------------------------------]")
 
-
-
-
 #############################################################################
 
 
@@ -167,7 +164,6 @@ env.render()  # Make the environment visible
 # Initialise Human feedback (call render before this)
 human_feedback = Feedback(env)
 
-num_steps = 2000
 steps = 0
 Episode = 1
 total_reward = []
@@ -179,6 +175,39 @@ state = env.reset()
 prev_s = state
 a = np.random.uniform(-1,1,action_dim)
 
+
+#############################################################################################
+def random_action():
+    steps=0
+    num_steps = 600
+    while steps < num_steps:
+        obs, terminal = env.reset(), False
+        while(not terminal):
+            env.render()
+            FDM_buff_s.append(obs)
+            action = 0
+            if np.random.uniform(0,1)<=0.5:
+                action = 2
+            obs, reward, terminal, _ = env.step(action)
+            FDM_buff_a.append(action)
+            FDM_buff_ns.append(obs)
+            steps += 1
+            print(steps)
+    
+    print("Training FDM")
+    #Train FDM every episode,
+    temp_s = np.array(FDM_buff_s)
+    temp_a = np.zeros((len(FDM_buff_a),action_dim))
+    for i in range(len(FDM_buff_a)):
+        temp_a[i][FDM_buff_a[i]] =1
+    history_FDM=FDM.fit(x=[temp_s,temp_a], y=np.array(FDM_buff_ns),epochs=20,batch_size=32, shuffle=True,verbose=False)
+    FDM_loss = history_FDM.history['loss'][-1]
+    print("FDM loss",FDM_loss)
+
+
+random_action()
+
+#############################################################################################
 pause = 0
 while pause == 1:
     pause = 1
@@ -212,7 +241,7 @@ while Episode < 50:
         # Get feedback signal
         h_fb = human_feedback.get_h() 
               
-        if (np.random.uniform(0,1)<=np.exp(-(Episode-10)/10)) or (feedback_dict.get(h_fb) != 0):  # if feedback is not zero i.e. is valid:
+        if  (feedback_dict.get(h_fb) != 0):  # if feedback is not zero i.e. is valid:
             oracle_action = oracle.decide(obs)
             
             if oracle_action ==0:
@@ -221,7 +250,7 @@ while Episode < 50:
                 h_fb =4
             
             # Update policy
-            print("Feedback", h_fb)
+            print("Feedback ", h_fb)
             h_counter += 1
 
             # Get new state transition label using feedback
@@ -294,6 +323,7 @@ while Episode < 50:
         
         #action = oracle.decide(obs)
         action = action_from_IDM
+        '''
         if np.random.uniform(0,1)<= 0.2 and Episode< 20:
             print("R ",end=" ")
             if np.random.uniform(0,1)<=0.5:
@@ -302,7 +332,7 @@ while Episode < 50:
                 action = 2
         else:
             action = action_from_IDM
-            
+        '''   
 
         prev_state = obs
         obs, reward, terminal, _ = env.step(action)
@@ -315,12 +345,12 @@ while Episode < 50:
         verbose = False
         if verbose ==True:
             print("Action                           ",action)
-            print("Curr state                       ",prev_state)
-            print("True next state                  ",obs)
+            #print("Curr state                       ",prev_state)
+            #print("True next state                  ",obs)
             #print("AE pred Nstate                   ",pred_ns[0],pred_ns[0])
-            print("FDM both next state               {}\t{}".format(FDM_ns_both[0],FDM_ns_both[1]))
-            print("True both next state              {}\t{}".format(Kinematic_Model(prev_state,0),Kinematic_Model(prev_state,2)))
-            print("Diff                              {}\t{}".format(np.abs(Kinematic_Model(prev_state,0)-FDM_ns_both[0]),np.abs(Kinematic_Model(prev_state,2)-FDM_ns_both[1])))
+            #print("FDM both next state               {}\t{}".format(FDM_ns_both[0],FDM_ns_both[1]))
+            #print("True both next state              {}\t{}".format(Kinematic_Model(prev_state,0),Kinematic_Model(prev_state,2)))
+            #print("Diff                              {}\t{}".format(np.abs(Kinematic_Model(prev_state,0)-FDM_ns_both[0]),np.abs(Kinematic_Model(prev_state,2)-FDM_ns_both[1])))
             #print("state diff                       ",state_diff[0],state_diff[1])
             #print("cost                             ",cost)
             #print("partial cost                     ",p_cost)
@@ -331,7 +361,7 @@ while Episode < 50:
             #    print("FDM left")        #0 Push cart to the left
             #else:
             #    print("FDM right")        #1 Push cart to the right
-            print("_____________________________________________________________________")
+            #print("_____________________________________________________________________")
             
         steps += 1
         t_counter+=1

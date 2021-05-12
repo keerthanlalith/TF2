@@ -23,7 +23,7 @@ import getch
 #from rl_dqn import DeepQNetwork
 from kinematic_model import Kinematic_Model
 
-trial_no = '4c9'
+trial_no = '4f1'
 if not os.path.exists('Log_files/'+trial_no):
     os.makedirs('Log_files/'+trial_no)
 ENV = "MountainCar-v0"
@@ -212,7 +212,7 @@ while Episode < 50:
         # Get feedback signal
         h_fb = human_feedback.get_h() 
               
-        if (np.random.uniform(0,1)<=np.exp(-(Episode-10)/10)) or (feedback_dict.get(h_fb) != 0):  # if feedback is not zero i.e. is valid:
+        if (Episode<10) or (feedback_dict.get(h_fb) != 0):  # if feedback is not zero i.e. is valid:
             oracle_action = oracle.decide(obs)
             
             if oracle_action ==0:
@@ -302,7 +302,7 @@ while Episode < 50:
                 action = 2
         else:
             action = action_from_IDM
-            
+           
 
         prev_state = obs
         obs, reward, terminal, _ = env.step(action)
@@ -312,15 +312,15 @@ while Episode < 50:
         FDM_buff_s.append(prev_state)
         FDM_buff_a.append(action)
         FDM_buff_ns.append(obs)
-        verbose = False
+        verbose = True
         if verbose ==True:
             print("Action                           ",action)
-            print("Curr state                       ",prev_state)
-            print("True next state                  ",obs)
+            #print("Curr state                       ",prev_state)
+            #print("True next state                  ",obs)
             #print("AE pred Nstate                   ",pred_ns[0],pred_ns[0])
-            print("FDM both next state               {}\t{}".format(FDM_ns_both[0],FDM_ns_both[1]))
-            print("True both next state              {}\t{}".format(Kinematic_Model(prev_state,0),Kinematic_Model(prev_state,2)))
-            print("Diff                              {}\t{}".format(np.abs(Kinematic_Model(prev_state,0)-FDM_ns_both[0]),np.abs(Kinematic_Model(prev_state,2)-FDM_ns_both[1])))
+            #print("FDM both next state               {}\t{}".format(FDM_ns_both[0],FDM_ns_both[1]))
+            #print("True both next state              {}\t{}".format(Kinematic_Model(prev_state,0),Kinematic_Model(prev_state,2)))
+            #print("Diff                              {}\t{}".format(np.abs(Kinematic_Model(prev_state,0)-FDM_ns_both[0]),np.abs(Kinematic_Model(prev_state,2)-FDM_ns_both[1])))
             #print("state diff                       ",state_diff[0],state_diff[1])
             #print("cost                             ",cost)
             #print("partial cost                     ",p_cost)

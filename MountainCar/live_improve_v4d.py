@@ -23,7 +23,7 @@ import getch
 #from rl_dqn import DeepQNetwork
 from kinematic_model import Kinematic_Model
 
-trial_no = '4c9'
+trial_no = '4d5'
 if not os.path.exists('Log_files/'+trial_no):
     os.makedirs('Log_files/'+trial_no)
 ENV = "MountainCar-v0"
@@ -264,7 +264,7 @@ while Episode < 50:
                 history_AE = AE.fit(x=temp_s, y=temp_ns,batch_size=64,shuffle=True, verbose=1)
             '''
             
-            if(len(AE_buff_s) >= 64) and steps%20==0: # batch size 64
+            if(len(AE_buff_s) >= 64) and steps%10==0: # batch size 64
                 #print("Training AE")
                 # do you need to run for 5 epochs
                 history_AE = AE.fit(x=np.array(AE_buff_s), y=np.array(AE_buff_ns),epochs=10,batch_size=64,shuffle=True, verbose=False)
@@ -294,14 +294,14 @@ while Episode < 50:
         
         #action = oracle.decide(obs)
         action = action_from_IDM
-        if np.random.uniform(0,1)<= 0.2 and Episode< 20:
-            print("R ",end=" ")
-            if np.random.uniform(0,1)<=0.5:
-                action = 0
-            else:
-                action = 2
-        else:
-            action = action_from_IDM
+        #if np.random.uniform(0,1)<= 0.2 and Episode< 20:
+        #    print("R ",end=" ")
+        #    if np.random.uniform(0,1)<=0.5:
+        #        action = 0
+        #    else:
+        #        action = 2
+        #else:
+        #    action = action_from_IDM
             
 
         prev_state = obs
@@ -349,7 +349,7 @@ while Episode < 50:
     #Train Next State predictor
     # Train with batch from Demo buffer (if enough entries exist)
     num = len(AE_buff_s)
-    if(num >= 64) and AE_loss > 0.000001 and Episode<30: # batch size 64
+    if(num >= 64) and AE_loss > 0.000001: # batch size 64
         print("Training AE")
         history_AE = AE.fit(x=np.array(AE_buff_s), y=np.array(AE_buff_ns),batch_size=64,epochs=20,shuffle=True, verbose=False)
         AE_loss = history_AE.history['loss'][-1]

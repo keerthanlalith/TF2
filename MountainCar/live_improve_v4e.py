@@ -23,10 +23,10 @@ import getch
 #from rl_dqn import DeepQNetwork
 from kinematic_model import Kinematic_Model
 
-trial_no = '4c9'
+trial_no = '4e2'
 if not os.path.exists('Log_files/'+trial_no):
     os.makedirs('Log_files/'+trial_no)
-ENV = "MountainCar-v0"
+ENV = "MountainCar-v1"
 env = gym.make(ENV)
 
 state_dim = env.observation_space.shape[0]

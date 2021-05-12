@@ -1,0 +1,160 @@
+
+Episode: 1, reward: -200.0
+Episode: 2, reward: -200.0
+Episode: 3, reward: -200.0
+Episode: 4, reward: -200.0
+Episode: 5, reward: -200.0
+Episode: 6, reward: -200.0
+Episode: 7, reward: -200.0
+Episode: 8, reward: -200.0
+Episode: 9, reward: -200.0
+Episode: 10, reward: -200.0
+Episode: 11, reward: -200.0
+Episode: 12, reward: -200.0
+Episode: 13, reward: -200.0
+Episode: 14, reward: -200.0
+Episode: 15, reward: -200.0
+Episode: 16, reward: -200.0
+Episode: 17, reward: -200.0
+Episode: 18, reward: -200.0
+Episode: 19, reward: -200.0
+Episode: 20, reward: -106.0
+Episode: 21, reward: -200.0
+Episode: 22, reward: -200.0
+Episode: 23, reward: -200.0
+Episode: 24, reward: -110.0
+Episode: 25, reward: -105.0
+Episode: 26, reward: -107.0
+Episode: 27, reward: -200.0
+Episode: 28, reward: -200.0
+Episode: 29, reward: -106.0
+Episode: 30, reward: -105.0
+Episode: 31, reward: -106.0
+Episode: 32, reward: -105.0
+Episode: 33, reward: -105.0
+Episode: 34, reward: -105.0
+Episode: 35, reward: -105.0
+Episode: 36, reward: -105.0
+Episode: 37, reward: -106.0
+Episode: 38, reward: -105.0
+Episode: 39, reward: -105.0
+Episode: 40, reward: -106.0
+[Episode #41]
+Background Trial: 1, reward: -106.0
+Background Trial: 2, reward: -106.0
+Background Trial: 3, reward: -106.0
+Background Trial: 4, reward: -106.0
+Background Trial: 5, reward: -106.0
+Background Trial: 6, reward: -106.0
+Background Trial: 7, reward: -106.0
+Background Trial: 8, reward: -106.0
+Background Trial: 9, reward: -106.0
+Background Trial: 10, reward: -106.0
+Episode: 41, reward: -106.0
+[Episode #42]
+Background Trial: 1, reward: -106.0
+Background Trial: 2, reward: -106.0
+Background Trial: 3, reward: -106.0
+Background Trial: 4, reward: -106.0
+Background Trial: 5, reward: -106.0
+Background Trial: 6, reward: -106.0
+Background Trial: 7, reward: -106.0
+Background Trial: 8, reward: -106.0
+Background Trial: 9, reward: -106.0
+Background Trial: 10, reward: -106.0
+Episode: 42, reward: -106.0
+[Episode #43]
+Background Trial: 1, reward: -106.0
+Background Trial: 2, reward: -106.0
+Background Trial: 3, reward: -106.0
+Background Trial: 4, reward: -106.0
+Background Trial: 5, reward: -106.0
+Background Trial: 6, reward: -106.0
+Background Trial: 7, reward: -106.0
+Background Trial: 8, reward: -106.0
+Background Trial: 9, reward: -106.0
+Background Trial: 10, reward: -106.0
+Episode: 43, reward: -105.0
+[Episode #44]
+Background Trial: 1, reward: -106.0
+Background Trial: 2, reward: -106.0
+Background Trial: 3, reward: -106.0
+Background Trial: 4, reward: -106.0
+Background Trial: 5, reward: -106.0
+Background Trial: 6, reward: -106.0
+Background Trial: 7, reward: -106.0
+Background Trial: 8, reward: -106.0
+Background Trial: 9, reward: -106.0
+Background Trial: 10, reward: -106.0
+Episode: 44, reward: -105.0
+[Episode #45]
+Background Trial: 1, reward: -105.0
+Background Trial: 2, reward: -105.0
+Background Trial: 3, reward: -105.0
+Background Trial: 4, reward: -105.0
+Background Trial: 5, reward: -105.0
+Background Trial: 6, reward: -105.0
+Background Trial: 7, reward: -105.0
+Background Trial: 8, reward: -105.0
+Background Trial: 9, reward: -105.0
+Background Trial: 10, reward: -105.0
+Episode: 45, reward: -105.0
+[Episode #46]
+Background Trial: 1, reward: -105.0
+Background Trial: 2, reward: -105.0
+Background Trial: 3, reward: -105.0
+Background Trial: 4, reward: -105.0
+Background Trial: 5, reward: -105.0
+Background Trial: 6, reward: -105.0
+Background Trial: 7, reward: -105.0
+Background Trial: 8, reward: -105.0
+Background Trial: 9, reward: -105.0
+Background Trial: 10, reward: -105.0
+Episode: 46, reward: -105.0
+[Episode #47]
+Background Trial: 1, reward: -105.0
+Background Trial: 2, reward: -105.0
+Background Trial: 3, reward: -105.0
+Background Trial: 4, reward: -105.0
+Background Trial: 5, reward: -105.0
+Background Trial: 6, reward: -105.0
+Background Trial: 7, reward: -105.0
+Background Trial: 8, reward: -105.0
+Background Trial: 9, reward: -105.0
+Background Trial: 10, reward: -105.0
+Episode: 47, reward: -105.0
+[Episode #48]
+Background Trial: 1, reward: -105.0
+Background Trial: 2, reward: -105.0
+Background Trial: 3, reward: -105.0
+Background Trial: 4, reward: -105.0
+Background Trial: 5, reward: -105.0
+Background Trial: 6, reward: -105.0
+Background Trial: 7, reward: -105.0
+Background Trial: 8, reward: -105.0
+Background Trial: 9, reward: -105.0
+Background Trial: 10, reward: -105.0
+Episode: 48, reward: -105.0
+[Episode #49]
+Background Trial: 1, reward: -105.0
+Background Trial: 2, reward: -105.0
+Background Trial: 3, reward: -105.0
+Background Trial: 4, reward: -105.0
+Background Trial: 5, reward: -105.0
+Background Trial: 6, reward: -105.0
+Background Trial: 7, reward: -105.0
+Background Trial: 8, reward: -105.0
+Background Trial: 9, reward: -105.0
+Background Trial: 10, reward: -105.0
+Episode: 49, reward: -105.0
+[Episode #50]
+Background Trial: 1, reward: -105.0
+Background Trial: 2, reward: -105.0
+Background Trial: 3, reward: -105.0
+Background Trial: 4, reward: -105.0
+Background Trial: 5, reward: -105.0
+Background Trial: 6, reward: -105.0
+Background Trial: 7, reward: -105.0
+Background Trial: 8, reward: -105.0
+Background Trial: 9, reward: -105.0
+Background Trial: 10, reward: -105.0
